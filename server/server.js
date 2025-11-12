@@ -25,7 +25,7 @@ const io = new Server(server, {
 
 // Middleware
 const corsOrigin = process.env.NODE_ENV === 'production'
-  ? 'https://cima-frontend.onrender.com'
+  ? ['https://communityissuemap.vercel.app', 'https://community-issue-map-*.vercel.app'] // Main domain + preview deployments
   : 'http://localhost:5173';
 app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
