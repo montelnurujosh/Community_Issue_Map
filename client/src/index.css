@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+.leaflet-container {
+  z-index: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.modal-backdrop {
+  z-index: 60;
+}
+
+body {
+  font-family: 'Poppins', 'Inter', sans-serif;
+  background-color: #f9fafb;
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white px-6 py-3 rounded-2xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-shadow duration-300;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300;
+  }
+
+  .sidebar-item {
+    @apply flex items-center space-x-3 px-4 py-3 rounded-2xl text-gray-700 hover:bg-primary hover:text-white transition-all duration-300;
+  }
+}
