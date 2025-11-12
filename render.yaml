@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: cima-backend
+    runtime: node
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        sync: false # Set this in Render dashboard or environment
+      - key: JWT_SECRET
+        generateValue: true
+      - key: EMAIL_USER
+        sync: false # Set this in Render dashboard
+      - key: EMAIL_PASS
+        sync: false # Set this in Render dashboard
+
+static_sites:
+  - type: static_site
+    name: cima-frontend
+    runtime: node
+    buildCommand: cd client && npm install && npm run build
+    staticPath: client/dist
+    envVars:
+      - key: VITE_API_BASE
+        value: https://cima-backend.onrender.com
+
+environments:
+  - name: production
+    staticSites:
+      - cima-frontend
+    services:
+      - cima-backend
