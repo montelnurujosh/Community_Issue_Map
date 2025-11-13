@@ -5,6 +5,7 @@ import {
   verifyUser,
   loginUser,
   forgotPassword,
+  resetPassword,
 } from '../controllers/authController.js';
 
 // @route   POST /api/auth/register
@@ -18,5 +19,8 @@ router.post('/login', loginUser);
 
 // @route   POST /api/auth/forgot-password
 router.post('/forgot-password', forgotPassword);
+
+// @route   POST /api/auth/reset-password
+router.post('/reset-password', resetPassword);
 
 export default router;

@@ -128,21 +128,54 @@ const loginUser = async (req, res) => {
   }
 };
 
-// @desc    Forgot password (mock implementation)
+// @desc    Forgot password
 // @route   POST /api/auth/forgot-password
 // @access  Public
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
-    // In a real app, you'd send an email with a reset link
-    // For now, just log the reset link
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     const resetToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '10m' });
-    const resetLink = `http://localhost:5000/api/auth/reset-password/${resetToken}`;
+    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
 
     console.log(`Password reset link for ${email}: ${resetLink}`);
 
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Reset your CIMA password',
+      html: `<p>Click <a href="${resetLink}">here</a> to reset your password. This link expires in 10 minutes.</p>`,
+    });
+
     res.json({ message: 'Password reset link sent to your email' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Reset password
+// @route   POST /api/auth/reset-password
+// @access  Public
+const resetPassword = async (req, res) => {
+  const { token, password } = req.body;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findOne({ email: decoded.email });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid token' });
+    }
+
+    user.password = password; // Will be hashed by pre-save middleware
+    await user.save();
+
+    res.json({ message: 'Password reset successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -153,4 +186,5 @@ export {
   verifyUser,
   loginUser,
   forgotPassword,
+  resetPassword,
 };
