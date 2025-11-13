@@ -49,12 +49,17 @@ const registerUser = async (req, res) => {
       const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify/${verificationToken}`;
       console.log(`Verification link for ${email}: ${verificationLink}`);
 
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'Verify your CIMA account',
-        html: `<p>Click <a href="${verificationLink}">here</a> to verify your account.</p>`,
-      });
+      try {
+        await transporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to: email,
+          subject: 'Verify your CIMA account',
+          html: `<p>Click <a href="${verificationLink}">here</a> to verify your account.</p>`,
+        });
+      } catch (emailError) {
+        console.error('Email sending failed:', emailError);
+        // Continue with registration even if email fails
+      }
 
       res.status(201).json({
         message: 'User registered successfully. Please check your email for verification link.',
