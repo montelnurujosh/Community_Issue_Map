@@ -46,10 +46,9 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      await registerUser(userData);
-      // After registration, login automatically
-      await login({ email: userData.email, password: userData.password });
-      toast.success('Account created successfully! Welcome to CIMA.');
+      const response = await registerUser(userData);
+      toast.success(response.message);
+      return response;
     } catch (error) {
       throw error;
     }
