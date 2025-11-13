@@ -22,6 +22,14 @@ function Navbar() {
         {user ? (
           <>
             <span className="text-gray-700">Hi, {user.name}</span>
+            {user.role === 'admin' && (
+              <Link
+                to="/admin"
+                className="bg-purple-600 text-white px-3 py-1 rounded-md hover:bg-purple-700 transition"
+              >
+                Admin
+              </Link>
+            )}
             <button
               onClick={logout}
               className="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 transition"

@@ -150,14 +150,18 @@ const forgotPassword = async (req, res) => {
 
     console.log(`Password reset link for ${email}: ${resetLink}`);
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Reset your CIMA password',
-      html: `<p>Click <a href="${resetLink}">here</a> to reset your password. This link expires in 10 minutes.</p>`,
-    });
-
-    res.json({ message: 'Password reset link sent to your email' });
+    try {
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Reset your CIMA password',
+        html: `<p>Click <a href="${resetLink}">here</a> to reset your password. This link expires in 10 minutes.</p>`,
+      });
+      res.json({ message: 'Password reset link sent to your email' });
+    } catch (emailError) {
+      console.error('Password reset email failed:', emailError);
+      res.status(500).json({ message: 'Failed to send reset email. Please try again.' });
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -186,10 +190,110 @@ const resetPassword = async (req, res) => {
   }
 };
 
+
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateProfile = async (req, res) => {
+  const { name, email } = req.body;
+
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if email is being changed and if it's already taken
+    if (email !== user.email) {
+      const emailExists = await User.findOne({ email });
+      if (emailExists) {
+        return res.status(400).json({ message: 'Email already in use' });
+      }
+      user.email = email;
+      user.isVerified = false; // Require re-verification for email change
+    }
+
+    user.name = name;
+    await user.save();
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isVerified: user.isVerified,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Change password
+// @route   PUT /api/auth/change-password
+// @access  Private
+const changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check current password
+    if (!(await user.matchPassword(currentPassword))) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    user.password = newPassword; // Will be hashed by pre-save middleware
+    await user.save();
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update notification preferences
+// @route   PUT /api/auth/notifications
+// @access  Private
+const updateNotifications = async (req, res) => {
+  const { emailNotifications, reportUpdates } = req.body;
+
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // For now, we'll store this in a simple way
+    // In a real app, you'd have a separate preferences collection
+    user.preferences = {
+      emailNotifications: emailNotifications ?? true,
+      reportUpdates: reportUpdates ?? true,
+    };
+
+    await user.save();
+
+    res.json({
+      message: 'Notification preferences updated',
+      preferences: user.preferences,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export {
   registerUser,
   verifyUser,
   loginUser,
   forgotPassword,
   resetPassword,
+  updateProfile,
+  changePassword,
+  updateNotifications,
 };

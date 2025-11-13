@@ -53,7 +53,7 @@ const COUNTIES = [
   'West Pokot'
 ];
 
-function Sidebar({ filters, onFilterChange }) {
+function Sidebar({ filters, onFilterChange, onViewReports, onSettings }) {
   return (
     <motion.aside
       initial={{ x: -300 }}
@@ -103,7 +103,10 @@ function Sidebar({ filters, onFilterChange }) {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.5, duration: 0.5 }}
           >
-            <button className="sidebar-item w-full mb-2">
+            <button
+              onClick={onViewReports}
+              className="sidebar-item w-full mb-2"
+            >
               <List className="w-5 h-5" />
               <span>View Reports</span>
             </button>
@@ -113,7 +116,10 @@ function Sidebar({ filters, onFilterChange }) {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.6, duration: 0.5 }}
           >
-            <button className="sidebar-item w-full">
+            <button
+              onClick={onSettings}
+              className="sidebar-item w-full"
+            >
               <Settings className="w-5 h-5" />
               <span>Settings</span>
             </button>

@@ -27,6 +27,16 @@ const userSchema = new mongoose.Schema({
   verificationToken: {
     type: String,
   },
+  preferences: {
+    emailNotifications: {
+      type: Boolean,
+      default: true,
+    },
+    reportUpdates: {
+      type: Boolean,
+      default: true,
+    },
+  },
 }, {
   timestamps: true,
 });

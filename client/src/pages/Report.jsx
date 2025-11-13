@@ -6,6 +6,8 @@ import DashboardCards from '../components/DashboardCards';
 import MapView from '../components/MapView';
 import IssueList from '../components/IssueList';
 import ReportModal from '../components/ReportModal';
+import IssueDetailModal from '../components/IssueDetailModal';
+import SettingsModal from '../components/SettingsModal';
 import { getReports, createReport } from '../utils/api';
 import { motion } from 'framer-motion';
 
@@ -28,6 +30,9 @@ function Report() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [focusedIssueId, setFocusedIssueId] = useState(null);
+  const [selectedIssue, setSelectedIssue] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);
 
@@ -35,7 +40,8 @@ function Report() {
     fetchReports();
 
     // Connect to socket
-    const newSocket = io('http://localhost:5000');
+    const socketUrl = import.meta.env.VITE_API_BASE?.replace('/api', '') || 'http://localhost:5000';
+    const newSocket = io(socketUrl);
     setSocket(newSocket);
 
     newSocket.on('newReport', (newReport) => {
@@ -99,12 +105,33 @@ function Report() {
   };
 
   const handleIssueClick = (issueId) => {
-    setFocusedIssueId(issueId);
+    const issue = issues.find(i => i._id === issueId);
+    if (issue) {
+      setSelectedIssue(issue);
+      setIsDetailModalOpen(true);
+    }
+  };
+
+  const handleViewReports = () => {
+    // Scroll to the reports section
+    const reportsSection = document.getElementById('recent-issues');
+    if (reportsSection) {
+      reportsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleSettings = () => {
+    setIsSettingsModalOpen(true);
   };
 
   return (
     <div className="flex h-screen bg-secondary">
-      <Sidebar filters={filters} onFilterChange={setFilters} />
+      <Sidebar
+        filters={filters}
+        onFilterChange={setFilters}
+        onViewReports={handleViewReports}
+        onSettings={handleSettings}
+      />
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6">
@@ -174,6 +201,7 @@ function Report() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8, duration: 0.6 }}
+                id="recent-issues"
               >
                 <h2 className="text-xl font-bold text-gray-900 mb-4">
                   Recent Issues ({filteredIssues.length})
@@ -206,8 +234,23 @@ function Report() {
         onSubmit={handleSubmitReport}
         initialCategory={selectedCategory}
       />
+
+      <IssueDetailModal
+        issue={selectedIssue}
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedIssue(null);
+        }}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+      />
     </div>
   );
 }
 
 export default Report;
+
