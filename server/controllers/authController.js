@@ -1,7 +1,10 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 import User from '../models/User.js';
+
+// Set SendGrid API key
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // Generate JWT
 const generateToken = (id) => {
@@ -10,14 +13,6 @@ const generateToken = (id) => {
   });
 };
 
-// Email transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -50,7 +45,7 @@ const registerUser = async (req, res) => {
       console.log(`Verification link for ${email}: ${verificationLink}`);
 
       try {
-        await transporter.sendMail({
+        await sgMail.send({
           from: process.env.EMAIL_USER,
           to: email,
           subject: 'Verify your CIMA account',
@@ -151,7 +146,7 @@ const forgotPassword = async (req, res) => {
     console.log(`Password reset link for ${email}: ${resetLink}`);
 
     try {
-      await transporter.sendMail({
+      await sgMail.send({
         from: process.env.EMAIL_USER,
         to: email,
         subject: 'Reset your CIMA password',
