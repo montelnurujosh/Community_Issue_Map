@@ -47,7 +47,6 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await registerUser(userData);
-      toast.success(response.message);
       return response;
     } catch (error) {
       throw error;

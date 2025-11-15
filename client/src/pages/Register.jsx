@@ -17,6 +17,7 @@ function Register() {
    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
    const [isLoading, setIsLoading] = useState(false);
    const [errors, setErrors] = useState({});
+   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
    const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -63,6 +64,8 @@ function Register() {
         email: formData.email,
         password: formData.password
       });
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 30000);
     } catch (error) {
       console.error('Registration error:', error);
       const message = error.response?.data?.message || 'Registration failed. Please try again.';
@@ -201,6 +204,12 @@ function Register() {
             {isLoading ? 'Please wait…' : 'Register'}
           </button>
         </form>
+
+        {showSuccessMessage && (
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mt-4">
+            Registered successfully kindly check your email or spam for verification
+          </div>
+        )}
 
         <div className="mt-6 text-center">
           <div className="text-sm text-gray-600">

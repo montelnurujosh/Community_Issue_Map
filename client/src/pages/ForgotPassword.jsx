@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { forgotPassword } from '../utils/api';
 
 function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -34,22 +35,11 @@ function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/auth/forgot-password', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email }),
-      // });
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // TODO: Handle successful request
-      console.log('Password reset requested for:', email);
+      await forgotPassword(email);
       setIsSubmitted(true);
     } catch (error) {
       console.error('Forgot password error:', error);
-      setErrors({ general: 'Failed to send reset email. Please try again.' });
+      setErrors({ general: error.response?.data?.message || 'Failed to send reset email. Please try again.' });
     } finally {
       setIsLoading(false);
     }
