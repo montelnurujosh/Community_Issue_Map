@@ -38,7 +38,7 @@ function MapView({ issues, focusedIssueId }) {
   }, [focusedIssueId, issues]);
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden" style={{ height: '65vh' }}>
+    <div className="bg-white rounded-lg shadow-md overflow-hidden" style={{ height: '50vh', minHeight: '300px' }}>
       <MapContainer
         center={mapCenter}
         zoom={mapZoom}

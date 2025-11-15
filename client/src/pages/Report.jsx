@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Construction, Trash2, Droplets, Zap, ShieldAlert, Plus } from 'lucide-react';
+import { Construction, Trash2, Droplets, Zap, ShieldAlert, Plus, Menu, X } from 'lucide-react';
 import { io } from 'socket.io-client';
 import Sidebar from '../components/Sidebar';
 import DashboardCards from '../components/DashboardCards';
@@ -35,6 +35,7 @@ function Report() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     fetchReports();
@@ -126,23 +127,68 @@ function Report() {
 
   return (
     <div className="flex h-screen bg-secondary">
-      <Sidebar
-        filters={filters}
-        onFilterChange={setFilters}
-        onViewReports={handleViewReports}
-        onSettings={handleSettings}
-      />
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setSidebarOpen(false)} />
+          <motion.aside
+            initial={{ x: -300 }}
+            animate={{ x: 0 }}
+            exit={{ x: -300 }}
+            transition={{ duration: 0.3 }}
+            className="absolute left-0 top-0 w-64 bg-white shadow-xl h-full overflow-y-auto"
+          >
+            <div className="p-4 flex justify-between items-center border-b">
+              <h2 className="text-lg font-bold text-gray-900">Dashboard</h2>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <Sidebar
+              filters={filters}
+              onFilterChange={setFilters}
+              onViewReports={handleViewReports}
+              onSettings={handleSettings}
+            />
+          </motion.aside>
+        </div>
+      )}
+
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block">
+        <Sidebar
+          filters={filters}
+          onFilterChange={setFilters}
+          onViewReports={handleViewReports}
+          onSettings={handleSettings}
+        />
+      </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto p-6">
+        {/* Mobile Header */}
+        <div className="lg:hidden bg-white shadow-sm border-b p-4 flex items-center justify-between">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 hover:bg-gray-100 rounded-lg"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          <h1 className="text-lg font-bold text-gray-900">Report Dashboard</h1>
+          <div className="w-10" /> {/* Spacer */}
+        </div>
+
+        <div className="max-w-7xl mx-auto p-4 lg:p-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="mb-6"
           >
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Report Dashboard</h1>
-            <p className="text-gray-600">View and manage community issues across Kenya 🇰🇪</p>
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">Report Dashboard</h1>
+            <p className="text-gray-600 text-sm lg:text-base">View and manage community issues across Kenya 🇰🇪</p>
           </motion.div>
 
           <motion.div
@@ -160,7 +206,7 @@ function Report() {
             className="mb-6"
           >
             <h2 className="text-xl font-bold text-gray-900 mb-4">Report by Category</h2>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
               {CATEGORY_CARDS.map((category, index) => (
                 <motion.button
                   key={category.name}
@@ -168,10 +214,10 @@ function Report() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.1, duration: 0.4 }}
                   onClick={() => handleCategoryClick(category.name)}
-                  className={`${category.color} text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center space-y-3`}
+                  className={`${category.color} text-white p-4 lg:p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center space-y-2 lg:space-y-3`}
                 >
-                  <category.icon className="w-8 h-8" />
-                  <span className="font-semibold">{category.name}</span>
+                  <category.icon className="w-6 h-6 lg:w-8 lg:h-8" />
+                  <span className="font-semibold text-sm lg:text-base">{category.name}</span>
                 </motion.button>
               ))}
             </div>
@@ -219,10 +265,10 @@ function Report() {
         animate={{ scale: 1 }}
         transition={{ delay: 1, type: 'spring', stiffness: 260, damping: 20 }}
         onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-6 right-6 bg-primary text-white p-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-110 z-50"
+        className="fixed bottom-4 right-4 lg:bottom-6 lg:right-6 bg-primary text-white p-3 lg:p-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-110 z-50"
         aria-label="Report Issue"
       >
-        <Plus className="w-6 h-6" />
+        <Plus className="w-5 h-5 lg:w-6 lg:h-6" />
       </motion.button>
 
       <ReportModal

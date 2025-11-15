@@ -28,7 +28,8 @@ const corsOrigin = process.env.NODE_ENV === 'production'
   ? ['https://communityissuemap.vercel.app', 'https://community-issue-map-*.vercel.app'] // Main domain + preview deployments
   : 'http://localhost:5173';
 app.use(cors({ origin: corsOrigin, credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);

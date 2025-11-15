@@ -54,6 +54,80 @@ const COUNTIES = [
   'West Pokot'
 ];
 
+const COUNTY_WARDS = {
+  'Nairobi City': [
+    'Westlands', 'Parklands', 'Central Business District', 'Kilimos', 'Koinange Street',
+    'Luthuli Avenue', 'River Road', 'Tom Mboya Street', 'Kilimani', 'Hurligham',
+    'Kileleshwa', 'Lavington', 'Langata Road', 'Ngong Road', 'Mombasa Road'
+  ],
+  'Kiambu': [
+    'Kiambaa', 'Kikuyu', 'Limuru', 'Ruiru', 'Thika', 'Juja', 'Karuri', 'Gatundu North',
+    'Gatundu South', 'Githunguri', 'Kabete', 'Thika Town'
+  ],
+  'Nakuru': [
+    'Nakuru Town East', 'Nakuru Town West', 'Koinange Street', 'London', 'Bazaar', 'Flamingo',
+    'Menengai', 'Nakuru East', 'Nakuru North', 'Nakuru South', 'Nakuru West', 'Rongai', 'Subukia'
+  ],
+  'Mombasa': [
+    'Changamwe', 'Jomvu', 'Kisauni', 'Nyali', 'Likoni', 'Mvita', 'Msambweni'
+  ],
+  'Kisumu': [
+    'Kisumu Central', 'Kisumu East', 'Kisumu West', 'Muhoroni', 'Nyakach', 'Nyando', 'Seme'
+  ],
+  'Uasin Gishu': [
+    'Eldoret East', 'Eldoret North', 'Eldoret South', 'Eldoret West', 'Wareng', 'Kesses'
+  ],
+  'Kakamega': [
+    'Lurambi', 'Navakholo', 'Mumias East', 'Mumias West', 'Matungu', 'Butere', 'Khwisero', 'Shinyalu'
+  ],
+  'Kericho': [
+    'Ainamoi', 'Bureti', 'Belgut', 'Sigowet/Soin', 'Soin Sigowet'
+  ],
+  'Bungoma': [
+    'Mt. Elgon', 'Sirisia', 'Kabuchai', 'Bumula', 'Kanduyi', 'Webuye East', 'Webuye West', 'Kimilili'
+  ],
+  'Kilifi': [
+    'Kilifi North', 'Kilifi South', 'Kaloleni', 'Rabai', 'Ganze', 'Malindi', 'Magarini'
+  ],
+  'Machakos': [
+    'Masinga', 'Yatta', 'Kangundo', 'Matungulu', 'Kathiani', 'Mavoko', 'Macha', 'Mwala'
+  ],
+  'Meru': [
+    'Tigania West', 'Tigania East', 'North Imenti', 'Buuri', 'Central Imenti', 'South Imenti'
+  ],
+  'Kajiado': [
+    'Kajiado North', 'Kajiado Central', 'Kajiado East', 'Kajiado West', 'Kajiado South'
+  ],
+  'Laikipia': [
+    'Laikipia West', 'Laikipia East', 'Laikipia North'
+  ],
+  'Narok': [
+    'Narok East', 'Narok North', 'Narok South', 'Narok West'
+  ],
+  'Nyeri': [
+    'Tetu', 'Kieni', 'Mathira', 'Othaya', 'Mukurweini', 'Nyeri Town'
+  ],
+  "Murang'a": [
+    "Kangema", "Mathioya", "Kiharu", "Kigumo", "Maragwa", "Kandara", "Gatanga"
+  ],
+  'Kirinyaga': [
+    'Mwea', 'Gichugu', 'Ndia', 'Kirinyaga Central'
+  ],
+  'Embu': [
+    'Manyatta', 'Runyenjes', 'Mbeere North', 'Mbeere South'
+  ],
+  'Kitui': [
+    'Kitui Rural', 'Kitui Central', 'Kitui East', 'Kitui West', 'Kitui South'
+  ],
+  'Makueni': [
+    'Makueni', 'Kaiti', 'Kibwezi West', 'Kibwezi East'
+  ],
+  'Tharaka-Nithi': [
+    'Tharaka', 'Chuka', 'Igambang\'ombe', 'Maara'
+  ]
+  // For counties not listed, users can enter manually or you can expand this list
+};
+
 function ReportForm({ onSubmit, initialCategory = '', onCancel }) {
   const [formData, setFormData] = useState({
     reporterName: '',
@@ -70,10 +144,19 @@ function ReportForm({ onSubmit, initialCategory = '', onCancel }) {
 
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [errors, setErrors] = useState({});
+  const [availableWards, setAvailableWards] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+
+    if (name === 'county') {
+      // Update available wards based on selected county
+      setAvailableWards(COUNTY_WARDS[value] || []);
+      // Reset ward selection when county changes
+      setFormData(prev => ({ ...prev, ward: '' }));
+    }
+
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -82,6 +165,11 @@ function ReportForm({ onSubmit, initialCategory = '', onCancel }) {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Check file size (limit to 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size must be less than 5MB');
+        return;
+      }
       setFormData(prev => ({ ...prev, image: file }));
     }
   };
@@ -253,14 +341,31 @@ function ReportForm({ onSubmit, initialCategory = '', onCancel }) {
           <label htmlFor="ward" className="block text-sm font-medium text-gray-700 mb-1">
             Ward/Subcounty
           </label>
-          <input
-            type="text"
-            id="ward"
-            name="ward"
-            value={formData.ward}
-            onChange={handleChange}
-            className="input-field"
-          />
+          {availableWards.length > 0 ? (
+            <select
+              id="ward"
+              name="ward"
+              value={formData.ward}
+              onChange={handleChange}
+              className="input-field"
+            >
+              <option value="">Select Ward/Subcounty</option>
+              {availableWards.map(ward => (
+                <option key={ward} value={ward}>{ward}</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              id="ward"
+              name="ward"
+              value={formData.ward}
+              onChange={handleChange}
+              placeholder={formData.county ? "Enter Ward/Subcounty" : "Select County first"}
+              className="input-field"
+              disabled={!formData.county}
+            />
+          )}
         </div>
       </div>
 
