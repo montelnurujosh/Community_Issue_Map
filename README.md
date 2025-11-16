@@ -17,7 +17,7 @@ A modern full-stack web application for citizens to report local community probl
 - **User Authentication**: Secure login/registration with JWT tokens
 - **Email Notifications**: Automated email verification and notifications
 - **Real-Time Updates**: Socket.io integration for live updates
-- **Responsive Design**: Beautiful, modern interface that works on all devices
+- **Responsive Design**: Beautiful, modern interface that works on all devices i.e Desktops, Mobile phones
 
 ## Technology Stack
 
