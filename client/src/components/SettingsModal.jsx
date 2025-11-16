@@ -150,9 +150,9 @@ function SettingsModal({ isOpen, onClose }) {
               </button>
             </div>
 
-            <div className="flex h-[600px]">
+            <div className="flex flex-col md:flex-row h-auto md:h-[600px]">
               {/* Sidebar */}
-              <div className="w-64 bg-gray-50 border-r p-4">
+              <div className="w-full md:w-64 bg-gray-50 border-r md:border-r border-b md:border-b-0 p-4">
                 <nav className="space-y-2">
                   {tabs.map((tab) => (
                     <button

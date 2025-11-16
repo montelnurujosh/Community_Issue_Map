@@ -18,10 +18,10 @@ function Navbar() {
         <span className="text-2xl font-bold text-gray-900">CIMA</span>
       </Link>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         {user ? (
           <>
-            <span className="text-gray-700">Hi, {user.name}</span>
+            <span className="text-gray-700 hidden sm:inline">Hi, </span><span className="text-gray-700 truncate max-w-[120px] md:max-w-none">{user.name}</span>
             {user.role === 'admin' && (
               <Link
                 to="/admin"
