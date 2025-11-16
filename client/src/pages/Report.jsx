@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Construction, Trash2, Droplets, Zap, ShieldAlert, Plus, Menu, X } from 'lucide-react';
+import { Construction, Trash2, Droplets, Zap, ShieldAlert, Activity, Building, Plus, Menu, X } from 'lucide-react';
 import { io } from 'socket.io-client';
 import Sidebar from '../components/Sidebar';
 import DashboardCards from '../components/DashboardCards';
@@ -12,11 +12,13 @@ import { getReports, createReport } from '../utils/api';
 import { motion } from 'framer-motion';
 
 const CATEGORY_CARDS = [
-  { name: 'Road', icon: Construction, color: 'bg-orange-500' },
-  { name: 'Water', icon: Droplets, color: 'bg-blue-500' },
-  { name: 'Electricity', icon: Zap, color: 'bg-yellow-500' },
-  { name: 'Waste', icon: Trash2, color: 'bg-green-600' },
-  { name: 'Security', icon: ShieldAlert, color: 'bg-red-500' },
+  { name: 'Roads & Infrastructure', icon: Construction, color: 'bg-orange-500' },
+  { name: 'Water & Sanitation', icon: Droplets, color: 'bg-blue-500' },
+  { name: 'Waste Management', icon: Trash2, color: 'bg-green-600' },
+  { name: 'Safety & Security', icon: ShieldAlert, color: 'bg-red-500' },
+  { name: 'Electricity & Lighting', icon: Zap, color: 'bg-yellow-500' },
+  { name: 'Health & Environment', icon: Activity, color: 'bg-purple-500' },
+  { name: 'Public Services', icon: Building, color: 'bg-indigo-500' },
 ];
 
 function Report() {
@@ -206,7 +208,8 @@ function Report() {
             className="mb-6"
           >
             <h2 className="text-xl font-bold text-gray-900 mb-4">Report by Category</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
+            <p className="text-gray-600 text-sm mb-4">CIMA covers the most common issues affecting Kenyan communities, enabling faster response and transparent reporting</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-4">
               {CATEGORY_CARDS.map((category, index) => (
                 <motion.button
                   key={category.name}

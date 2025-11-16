@@ -144,11 +144,13 @@ function Sidebar({ filters, onFilterChange, onViewReports, onSettings }) {
               className="input-field"
             >
               <option value="All">All Categories</option>
-              <option value="Road">Road</option>
-              <option value="Waste">Waste</option>
-              <option value="Water">Water</option>
-              <option value="Electricity">Electricity</option>
-              <option value="Security">Security</option>
+              <option value="Roads & Infrastructure">Roads & Infrastructure</option>
+              <option value="Water & Sanitation">Water & Sanitation</option>
+              <option value="Waste Management">Waste Management</option>
+              <option value="Safety & Security">Safety & Security</option>
+              <option value="Electricity & Lighting">Electricity & Lighting</option>
+              <option value="Health & Environment">Health & Environment</option>
+              <option value="Public Services">Public Services</option>
             </select>
           </div>
 

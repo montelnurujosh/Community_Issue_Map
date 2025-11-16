@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { MapPin, Upload } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const CATEGORIES = ['Road', 'Waste', 'Water', 'Electricity', 'Security'];
+const CATEGORIES = ['Roads & Infrastructure', 'Water & Sanitation', 'Waste Management', 'Safety & Security', 'Electricity & Lighting', 'Health & Environment', 'Public Services'];
 
 const COUNTIES = [
   'Baringo',
