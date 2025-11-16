@@ -62,32 +62,32 @@ function Admin() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-4 md:p-6">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-8"
+          className="mb-6 md:mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage users and reports</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+          <p className="text-gray-600 text-sm md:text-base">Manage users and reports</p>
         </motion.div>
 
         {/* Tabs */}
-        <div className="flex space-x-1 mb-6 bg-white p-1 rounded-2xl shadow-sm">
+        <div className="flex space-x-1 mb-4 md:mb-6 bg-white p-1 rounded-2xl shadow-sm overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
+              className={`flex items-center space-x-1 md:space-x-2 px-3 md:px-6 py-2 md:py-3 rounded-xl font-medium transition-all duration-200 flex-shrink-0 ${
                 activeTab === tab.id
                   ? 'bg-primary text-white shadow-md'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <tab.icon className="w-5 h-5" />
-              <span>{tab.label}</span>
-              <span className={`px-2 py-1 rounded-full text-xs ${
+              <tab.icon className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="text-sm md:text-base">{tab.label}</span>
+              <span className={`px-1 md:px-2 py-1 rounded-full text-xs ${
                 activeTab === tab.id ? 'bg-white bg-opacity-20' : 'bg-gray-100'
               }`}>
                 {tab.count}
@@ -108,16 +108,16 @@ function Admin() {
                 animate={{ opacity: 1 }}
                 className="bg-white rounded-2xl shadow-sm overflow-hidden"
               >
-                <div className="p-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">Reports</h2>
+                <div className="p-4 md:p-6">
+                  <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4">Reports</h2>
                   <div className="space-y-4">
                     {reports.map((report) => (
                       <div key={report._id} className="border border-gray-200 rounded-xl p-4">
-                        <div className="flex justify-between items-start">
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
                           <div className="flex-1">
                             <h3 className="font-semibold text-gray-900">{report.title}</h3>
                             <p className="text-gray-600 text-sm mt-1">{report.description}</p>
-                            <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                            <div className="flex flex-wrap items-center gap-2 md:gap-4 mt-2 text-sm text-gray-500">
                               <span>Category: {report.category}</span>
                               <span>Location: {report.location?.county}</span>
                               <span>Status: {report.status}</span>
@@ -126,13 +126,13 @@ function Admin() {
                           </div>
                           <button
                             onClick={() => handleDeleteReport(report._id)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            className="self-start md:self-center p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
                           >
                             <Trash2 className="w-5 h-5" />
                           </button>
                         </div>
                         {report.imageUrl && (
-                          <img src={report.imageUrl} alt="Report" className="mt-4 max-w-xs rounded-lg" />
+                          <img src={report.imageUrl} alt="Report" className="mt-4 w-full md:max-w-xs rounded-lg" />
                         )}
                       </div>
                     ))}
@@ -147,16 +147,16 @@ function Admin() {
                 animate={{ opacity: 1 }}
                 className="bg-white rounded-2xl shadow-sm overflow-hidden"
               >
-                <div className="p-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">Users</h2>
+                <div className="p-4 md:p-6">
+                  <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4">Users</h2>
                   <div className="space-y-4">
                     {users.map((user) => (
                       <div key={user._id} className="border border-gray-200 rounded-xl p-4">
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                           <div>
                             <h3 className="font-semibold text-gray-900">{user.name}</h3>
                             <p className="text-gray-600 text-sm">{user.email}</p>
-                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${
                               user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
                             }`}>
                               {user.role}
@@ -165,7 +165,7 @@ function Admin() {
                           {user.role !== 'admin' && (
                             <button
                               onClick={() => handlePromoteUser(user._id)}
-                              className="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors"
+                              className="w-full md:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors"
                             >
                               <UserCheck className="w-4 h-4" />
                               <span>Promote</span>

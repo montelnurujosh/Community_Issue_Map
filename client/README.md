@@ -2,12 +2,16 @@
 
 A modern web application for citizens to report local community problems such as potholes, waste management issues, unsafe areas, water supply problems, and electricity outages. The app visualizes issues on an interactive map and provides a professional dashboard for tracking and managing reports.
 
+## 🌐 Live Demo
+
+[View Live Application](https://communityissuemap.vercel.com)
+
 ## Features
 
 - **Interactive Map**: Visualize all reported issues on an OpenStreetMap-powered map with custom markers
 - **Issue Reporting**: Easy-to-use form for submitting community issues with location detection
 - **Dashboard**: Professional dashboard with statistics, filters, and detailed issue tracking
-- **Category-Based Reporting**: Quick access to report issues by category (Road, Water, Electricity, Waste, Security)
+- **Category-Based Reporting**: Quick access to report issues by category (Roads & Infrastructure, Water & Sanitation, Waste Management, Safety & Security, Electricity & Lighting, Health & Environment, Public Services)
 - **Real-Time Filtering**: Filter issues by category, county, and status
 - **Responsive Design**: Beautiful, modern interface that works on all devices
 
@@ -74,7 +78,7 @@ This frontend requires a MERN backend with the following API endpoints:
    ```json
    {
      "title": "string",
-     "category": "Road|Waste|Water|Electricity|Security",
+     "category": "Roads & Infrastructure|Water & Sanitation|Waste Management|Safety & Security|Electricity & Lighting|Health & Environment|Public Services",
      "description": "string",
      "reporterName": "string",
      "location": {
@@ -133,7 +137,7 @@ Users can click "Detect" to automatically populate latitude/longitude using the 
 - Clicking an issue in the list focuses the map on that marker
 
 ### Filters
-- Category filter: All, Road, Waste, Water, Electricity, Security
+- Category filter: All, Roads & Infrastructure, Water & Sanitation, Waste Management, Safety & Security, Electricity & Lighting, Health & Environment, Public Services
 - County dropdown: Sample Kenyan counties included
 - Status filter: All, New, In Progress, Resolved
 
@@ -155,6 +159,15 @@ Users can click "Detect" to automatically populate latitude/longitude using the 
 - Firefox (latest)
 - Safari (latest)
 - Edge (latest)
+
+## Author
+
+**Joshua Nuru**
+
+- [LinkedIn](https://linkedin.com/in/joshua-nuru)
+- [Instagram](https://instagram.com/_just_call.me_nuru_)
+- [Twitter](https://twitter.com/nurujoshua496)
+- [GitHub](https://github.com/montelnurujosh)
 
 ## License
 
