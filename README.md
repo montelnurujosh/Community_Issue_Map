@@ -4,7 +4,7 @@ A modern full-stack web application for citizens to report local community probl
 
 ## 🌐 Live Demo
 
-[View Live Application](https://communityissuemap.vercel.com)
+[View Live Application](https://communityissuemap.vercel.app)
 
 ## Features
 
