@@ -56,6 +56,11 @@ export const loginUser = async (userData) => {
   return response.data;
 };
 
+export const resendVerificationEmail = async (email) => {
+  const response = await api.post('/api/auth/resend-verification', { email });
+  return response.data;
+};
+
 export const forgotPassword = async (email) => {
   const response = await api.post('/api/auth/forgot-password', { email });
   return response.data;

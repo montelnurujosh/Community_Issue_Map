@@ -142,8 +142,9 @@ const registerUser = async (req, res) => {
       }
 
       // Existing unverified user: refresh token and resend verification link!
-      const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+      const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '5m' });
       user.verificationToken = verificationToken;
+      user.lastVerificationEmailSentAt = new Date();
       if (name) user.name = name;
       if (password) user.password = password;
       await user.save();
@@ -151,7 +152,7 @@ const registerUser = async (req, res) => {
       const baseUrl = getFrontendBaseUrl(req);
       const verificationLink = `${baseUrl}/verify/${verificationToken}`;
       console.log(`\n============================================================`);
-      console.log(`RESENDING VERIFICATION LINK FOR ${email}:`);
+      console.log(`RESENDING VERIFICATION LINK FOR ${email} (valid 5 mins):`);
       console.log(`${verificationLink}`);
       console.log(`============================================================\n`);
 
@@ -166,7 +167,7 @@ const registerUser = async (req, res) => {
 
       return res.status(200).json({
         message: emailSent
-          ? 'Account is already registered but unverified. A new verification link has been sent to your email!'
+          ? 'Account is already registered but unverified. A new verification link has been sent to your email (valid for 5 minutes)!'
           : 'A new verification link has been generated. Please check your email.',
         verificationLink: process.env.NODE_ENV !== 'production' ? verificationLink : undefined,
         _id: user._id,
@@ -176,8 +177,8 @@ const registerUser = async (req, res) => {
       });
     }
 
-    // Generate verification token
-    const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    // Generate verification token (expires in 5 minutes)
+    const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '5m' });
 
     // Create user (isVerified is false by default)
     user = await User.create({
@@ -185,6 +186,7 @@ const registerUser = async (req, res) => {
       email,
       password,
       verificationToken,
+      lastVerificationEmailSentAt: new Date(),
     });
 
     if (user) {
@@ -192,7 +194,7 @@ const registerUser = async (req, res) => {
       const baseUrl = getFrontendBaseUrl(req);
       const verificationLink = `${baseUrl}/verify/${verificationToken}`;
       console.log(`\n============================================================`);
-      console.log(`VERIFICATION LINK FOR ${email}:`);
+      console.log(`VERIFICATION LINK FOR ${email} (valid 5 mins):`);
       console.log(`${verificationLink}`);
       console.log(`============================================================\n`);
 
@@ -207,7 +209,7 @@ const registerUser = async (req, res) => {
 
       res.status(201).json({
         message: emailSent
-          ? 'User registered successfully. Please check your email for the verification link.'
+          ? 'User registered successfully. Please check your email for the verification link (valid for 5 minutes).'
           : 'User registered successfully. Check your email or use the verification link in the server console to verify before logging in.',
         verificationLink: process.env.NODE_ENV !== 'production' ? verificationLink : undefined,
         _id: user._id,
@@ -230,22 +232,95 @@ const verifyUser = async (req, res) => {
   const { token } = req.params;
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtErr) {
+      if (jwtErr.name === 'TokenExpiredError') {
+        const payload = jwt.decode(token);
+        return res.status(400).json({
+          message: 'This verification link has expired (links are valid for 5 minutes). Please request a new verification link below.',
+          expired: true,
+          email: payload?.email,
+        });
+      }
+      return res.status(400).json({ message: 'Invalid or malformed verification link.' });
+    }
+
     const user = await User.findOne({ email: decoded.email });
 
     if (!user) {
-      return res.status(400).json({ message: 'Invalid token' });
+      return res.status(400).json({ message: 'Account not found.' });
     }
 
     if (user.isVerified) {
-      return res.status(400).json({ message: 'User already verified' });
+      return res.status(200).json({ message: 'Your account is already verified! You can log in.' });
     }
 
     user.isVerified = true;
     user.verificationToken = undefined;
     await user.save();
 
-    res.json({ message: 'Email verified successfully. You can now log in.' });
+    res.json({ message: 'Email verified successfully! You can now log in.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resend verification email
+// @route   POST /api/auth/resend-verification
+// @access  Public
+const resendVerification = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: 'Please provide an email address' });
+  }
+
+  try {
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+
+    if (!user) {
+      return res.status(404).json({ message: 'No account found with this email' });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ message: 'This account is already verified. Please log in.' });
+    }
+
+    // Rate limiting cooldown (60 seconds)
+    const now = new Date();
+    if (user.lastVerificationEmailSentAt && (now - new Date(user.lastVerificationEmailSentAt)) < 60000) {
+      const waitSeconds = Math.ceil((60000 - (now - new Date(user.lastVerificationEmailSentAt))) / 1000);
+      return res.status(429).json({
+        message: `Please wait ${waitSeconds}s before requesting another verification email.`,
+      });
+    }
+
+    // Generate fresh 5-minute token
+    const verificationToken = jwt.sign({ email: user.email }, process.env.JWT_SECRET, { expiresIn: '5m' });
+    user.verificationToken = verificationToken;
+    user.lastVerificationEmailSentAt = now;
+    await user.save();
+
+    const baseUrl = getFrontendBaseUrl(req);
+    const verificationLink = `${baseUrl}/verify/${verificationToken}`;
+
+    console.log(`\n============================================================`);
+    console.log(`RESENDING VERIFICATION LINK FOR ${user.email} (valid 5 mins):`);
+    console.log(`${verificationLink}`);
+    console.log(`============================================================\n`);
+
+    try {
+      await sendVerificationEmail(user.email, verificationLink);
+      console.log(`Verification email resent successfully to ${user.email}`);
+    } catch (emailError) {
+      console.warn('Resend verification email failed:', emailError?.response?.body || emailError.message);
+    }
+
+    res.json({
+      message: 'A fresh verification link has been sent to your email (valid for 5 minutes).',
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -440,6 +515,7 @@ const updateNotifications = async (req, res) => {
 export {
   registerUser,
   verifyUser,
+  resendVerification,
   loginUser,
   forgotPassword,
   resetPassword,

@@ -4,6 +4,7 @@ import { Eye, EyeOff, User, Mail, Lock, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
+import { resendVerificationEmail } from '../utils/api';
 
 function Register() {
    const { register } = useAuth();
@@ -18,7 +19,35 @@ function Register() {
    const [isLoading, setIsLoading] = useState(false);
    const [errors, setErrors] = useState({});
    const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+   const [isResending, setIsResending] = useState(false);
+   const [resendCooldown, setResendCooldown] = useState(0);
    const navigate = useNavigate();
+
+  const handleResend = async () => {
+    if (!formData.email.trim()) {
+      toast.error('Please enter your email above first');
+      return;
+    }
+    setIsResending(true);
+    try {
+      const res = await resendVerificationEmail(formData.email.trim());
+      toast.success(res.message || 'Verification link sent! Valid for 5 minutes.');
+      setResendCooldown(60);
+      const timer = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to resend verification link');
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -206,8 +235,20 @@ function Register() {
         </form>
 
         {showSuccessMessage && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mt-4">
-            Registered successfully kindly check your email or spam for verification
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mt-4 text-sm">
+            <p className="font-semibold">Registered successfully!</p>
+            <p className="mt-1">Kindly check your email or spam folder for your verification link (valid for 5 minutes).</p>
+            <div className="mt-3 pt-2 border-t border-green-200 flex items-center justify-between">
+              <span className="text-xs text-green-800">Didn't get the email?</span>
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={isResending || resendCooldown > 0}
+                className="text-xs font-bold text-green-900 underline hover:text-green-950 disabled:opacity-50"
+              >
+                {isResending ? 'Sending...' : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Link'}
+              </button>
+            </div>
           </div>
         )}
 

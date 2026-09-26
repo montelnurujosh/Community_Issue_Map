@@ -4,6 +4,7 @@ import { protect } from '../middleware/authMiddleware.js';
 import {
   registerUser,
   verifyUser,
+  resendVerification,
   loginUser,
   forgotPassword,
   resetPassword,
@@ -17,6 +18,9 @@ router.post('/register', registerUser);
 
 // @route   GET /api/auth/verify/:token
 router.get('/verify/:token', verifyUser);
+
+// @route   POST /api/auth/resend-verification
+router.post('/resend-verification', resendVerification);
 
 // @route   POST /api/auth/login
 router.post('/login', loginUser);

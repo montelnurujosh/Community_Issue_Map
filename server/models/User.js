@@ -27,6 +27,9 @@ const userSchema = new mongoose.Schema({
   verificationToken: {
     type: String,
   },
+  lastVerificationEmailSentAt: {
+    type: Date,
+  },
   preferences: {
     emailNotifications: {
       type: Boolean,

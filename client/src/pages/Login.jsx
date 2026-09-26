@@ -4,6 +4,7 @@ import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
+import { resendVerificationEmail } from '../utils/api';
 
 function Login() {
    const { login } = useAuth();
@@ -14,7 +15,35 @@ function Login() {
    const [showPassword, setShowPassword] = useState(false);
    const [isLoading, setIsLoading] = useState(false);
    const [errors, setErrors] = useState({});
+   const [isResending, setIsResending] = useState(false);
+   const [resendCooldown, setResendCooldown] = useState(0);
    const navigate = useNavigate();
+
+  const handleResend = async () => {
+    if (!formData.email.trim()) {
+      toast.error('Please enter your email address first');
+      return;
+    }
+    setIsResending(true);
+    try {
+      const res = await resendVerificationEmail(formData.email.trim());
+      toast.success(res.message || 'Verification link sent! Valid for 5 minutes.');
+      setResendCooldown(60);
+      const timer = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to resend verification email');
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -71,8 +100,20 @@ function Login() {
         <div className="px-6 py-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               {errors.general && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                  {errors.general}
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                  <p>{errors.general}</p>
+                  {errors.general.toLowerCase().includes('verify') && (
+                    <div className="mt-2 pt-2 border-t border-red-200">
+                      <button
+                        type="button"
+                        onClick={handleResend}
+                        disabled={isResending || resendCooldown > 0}
+                        className="text-xs font-bold text-green-700 underline hover:text-green-800 disabled:opacity-50"
+                      >
+                        {isResending ? 'Resending link...' : resendCooldown > 0 ? `Resend link in ${resendCooldown}s` : 'Resend verification link (valid for 5 mins)'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
