@@ -43,7 +43,7 @@ function Report() {
     fetchReports();
 
     // Connect to socket
-    const socketUrl = import.meta.env.VITE_API_BASE?.replace('/api', '') || 'http://localhost:5000';
+    const socketUrl = import.meta.env.VITE_API_BASE?.replace('/api', '') || 'http://localhost:5001';
     const newSocket = io(socketUrl);
     setSocket(newSocket);
 
