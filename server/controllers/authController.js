@@ -1,10 +1,103 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import sgMail from '@sendgrid/mail';
+import nodemailer from 'nodemailer';
 import User from '../models/User.js';
 
-// Set SendGrid API key
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// Set SendGrid API key if available
+if (process.env.SENDGRID_API_KEY) {
+  try {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  } catch (err) {
+    console.warn('Failed to set SendGrid API key:', err.message);
+  }
+}
+
+// Email sender helper supporting both Gmail (Nodemailer) and SendGrid
+const sendVerificationEmail = async (email, link) => {
+  if (process.env.EMAIL_PASS) {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS.replace(/\s+/g, ''),
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+    return await transporter.sendMail({
+      from: `"CIMA" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Verify your CIMA account',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+          <h2 style="color: #15803d; text-align: center;">Welcome to CIMA</h2>
+          <p>Thank you for joining our community to help map and solve local issues.</p>
+          <p>Please click the button below to verify your email address:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${link}" style="background-color: #15803d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Verify My Email</a>
+          </div>
+          <p style="color: #666; font-size: 13px;">Or copy and paste this link into your browser:</p>
+          <p style="word-break: break-all; font-size: 13px; color: #15803d;">${link}</p>
+        </div>
+      `,
+    });
+  }
+
+  if (process.env.SENDGRID_API_KEY) {
+    return await sgMail.send({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Verify your CIMA account',
+      html: `<p>Click <a href="${link}">here</a> to verify your account.</p>`,
+    });
+  }
+
+  throw new Error('No email service configured');
+};
+
+const sendResetEmail = async (email, link) => {
+  if (process.env.EMAIL_PASS) {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS.replace(/\s+/g, ''),
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+    return await transporter.sendMail({
+      from: `"CIMA" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Reset your CIMA password',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+          <h2 style="color: #15803d; text-align: center;">CIMA Password Reset</h2>
+          <p>You requested to reset your password. Click the button below to set a new password:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${link}" style="background-color: #15803d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Reset Password</a>
+          </div>
+          <p style="color: #666; font-size: 13px;">This link expires in 10 minutes. If you did not request this, please ignore this email.</p>
+          <p style="word-break: break-all; font-size: 13px; color: #15803d;">${link}</p>
+        </div>
+      `,
+    });
+  }
+
+  if (process.env.SENDGRID_API_KEY) {
+    return await sgMail.send({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Reset your CIMA password',
+      html: `<p>Click <a href="${link}">here</a> to reset your password. This link expires in 10 minutes.</p>`,
+    });
+  }
+
+  throw new Error('No email service configured');
+};
 
 // Generate JWT
 const generateToken = (id) => {
@@ -12,7 +105,6 @@ const generateToken = (id) => {
     expiresIn: '30d',
   });
 };
-
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -31,7 +123,7 @@ const registerUser = async (req, res) => {
     // Generate verification token
     const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    // Create user
+    // Create user (isVerified is false by default)
     const user = await User.create({
       name,
       email,
@@ -42,22 +134,25 @@ const registerUser = async (req, res) => {
     if (user) {
       // Send verification email
       const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify/${verificationToken}`;
-      console.log(`Verification link for ${email}: ${verificationLink}`);
+      console.log(`\n============================================================`);
+      console.log(`VERIFICATION LINK FOR ${email}:`);
+      console.log(`${verificationLink}`);
+      console.log(`============================================================\n`);
 
+      let emailSent = false;
       try {
-        await sgMail.send({
-          from: process.env.EMAIL_USER,
-          to: email,
-          subject: 'Verify your CIMA account',
-          html: `<p>Click <a href="${verificationLink}">here</a> to verify your account.</p>`,
-        });
+        await sendVerificationEmail(email, verificationLink);
+        emailSent = true;
+        console.log(`Verification email sent successfully to ${email}`);
       } catch (emailError) {
-        console.error('Email sending failed:', emailError);
-        // Continue with registration even if email fails
+        console.warn('Email sending failed (e.g. SendGrid quota or network):', emailError?.response?.body || emailError.message);
       }
 
       res.status(201).json({
-        message: 'User registered successfully. Please check your email for verification link.',
+        message: emailSent
+          ? 'User registered successfully. Please check your email for the verification link.'
+          : 'User registered successfully. Check your email or use the verification link in the server console to verify before logging in.',
+        verificationLink: process.env.NODE_ENV !== 'production' ? verificationLink : undefined,
         _id: user._id,
         name: user.name,
         email: user.email,
@@ -143,19 +238,24 @@ const forgotPassword = async (req, res) => {
     const resetToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '10m' });
     const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
 
-    console.log(`Password reset link for ${email}: ${resetLink}`);
+    console.log(`\n============================================================`);
+    console.log(`PASSWORD RESET LINK FOR ${email}:`);
+    console.log(`${resetLink}`);
+    console.log(`============================================================\n`);
 
     try {
-      await sgMail.send({
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'Reset your CIMA password',
-        html: `<p>Click <a href="${resetLink}">here</a> to reset your password. This link expires in 10 minutes.</p>`,
-      });
+      await sendResetEmail(email, resetLink);
       res.json({ message: 'Password reset link sent to your email' });
     } catch (emailError) {
-      console.error('Password reset email failed:', emailError);
-      res.status(500).json({ message: 'Failed to send reset email. Please try again.' });
+      console.warn('Password reset email failed:', emailError?.response?.body || emailError.message);
+      if (process.env.NODE_ENV !== 'production') {
+        res.json({
+          message: 'Password reset link generated (email delivery failed; link logged to server console).',
+          resetLink
+        });
+      } else {
+        res.status(500).json({ message: 'Failed to send reset email. Please try again.' });
+      }
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -184,7 +284,6 @@ const resetPassword = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 // @desc    Update user profile
 // @route   PUT /api/auth/profile
@@ -264,8 +363,6 @@ const updateNotifications = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // For now, we'll store this in a simple way
-    // In a real app, you'd have a separate preferences collection
     user.preferences = {
       emailNotifications: emailNotifications ?? true,
       reportUpdates: reportUpdates ?? true,
