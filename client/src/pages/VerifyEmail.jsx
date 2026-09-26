@@ -14,6 +14,7 @@ function VerifyEmail() {
   const [email, setEmail] = useState('');
   const [resending, setResending] = useState(false);
   const [resentSuccess, setResentSuccess] = useState(false);
+  const [directLink, setDirectLink] = useState('');
 
   useEffect(() => {
     const verifyEmail = async () => {
@@ -48,7 +49,10 @@ function VerifyEmail() {
 
     setResending(true);
     try {
-      await resendVerificationEmail(email.trim());
+      const res = await resendVerificationEmail(email.trim());
+      if (res.verificationLink) {
+        setDirectLink(res.verificationLink);
+      }
       setResentSuccess(true);
       toast.success('Fresh verification link sent! Valid for 5 minutes.');
     } catch (err) {
@@ -124,7 +128,17 @@ function VerifyEmail() {
 
         {resentSuccess ? (
           <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded-lg mb-6 text-sm">
-            ✅ A fresh verification link has been sent to <strong>{email}</strong> (valid for 5 minutes). Please check your inbox and spam folder.
+            <p>✅ A fresh verification link has been generated for <strong>{email}</strong> (valid for 5 minutes).</p>
+            {directLink && (
+              <div className="mt-3 p-3 bg-white border border-green-300 rounded-lg text-center shadow-sm">
+                <a
+                  href={directLink}
+                  className="inline-block w-full bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-700 transition"
+                >
+                  Verify Email Now
+                </a>
+              </div>
+            )}
           </div>
         ) : (
           <form onSubmit={handleResend} className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6 text-left">

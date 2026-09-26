@@ -17,6 +17,7 @@ function Login() {
    const [errors, setErrors] = useState({});
    const [isResending, setIsResending] = useState(false);
    const [resendCooldown, setResendCooldown] = useState(0);
+   const [directVerificationLink, setDirectVerificationLink] = useState('');
    const navigate = useNavigate();
 
   const handleResend = async () => {
@@ -27,6 +28,9 @@ function Login() {
     setIsResending(true);
     try {
       const res = await resendVerificationEmail(formData.email.trim());
+      if (res.verificationLink) {
+        setDirectVerificationLink(res.verificationLink);
+      }
       toast.success(res.message || 'Verification link sent! Valid for 5 minutes.');
       setResendCooldown(60);
       const timer = setInterval(() => {
@@ -112,6 +116,16 @@ function Login() {
                       >
                         {isResending ? 'Resending link...' : resendCooldown > 0 ? `Resend link in ${resendCooldown}s` : 'Resend verification link (valid for 5 mins)'}
                       </button>
+                      {directVerificationLink && (
+                        <div className="mt-2 p-2 bg-white border border-green-300 rounded text-center">
+                          <a
+                            href={directVerificationLink}
+                            className="inline-block w-full bg-green-600 text-white font-bold py-1.5 px-3 rounded text-xs hover:bg-green-700 transition"
+                          >
+                            Verify Email Instantly
+                          </a>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

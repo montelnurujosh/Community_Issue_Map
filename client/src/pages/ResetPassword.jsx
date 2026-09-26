@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle, Home } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../utils/api';
 
 function ResetPassword() {

@@ -19,6 +19,7 @@ function Register() {
    const [isLoading, setIsLoading] = useState(false);
    const [errors, setErrors] = useState({});
    const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+   const [registrationData, setRegistrationData] = useState(null);
    const [isResending, setIsResending] = useState(false);
    const [resendCooldown, setResendCooldown] = useState(0);
    const navigate = useNavigate();
@@ -31,6 +32,9 @@ function Register() {
     setIsResending(true);
     try {
       const res = await resendVerificationEmail(formData.email.trim());
+      if (res.verificationLink) {
+        setRegistrationData(prev => ({ ...prev, verificationLink: res.verificationLink }));
+      }
       toast.success(res.message || 'Verification link sent! Valid for 5 minutes.');
       setResendCooldown(60);
       const timer = setInterval(() => {
@@ -88,11 +92,12 @@ function Register() {
     setIsLoading(true);
 
     try {
-      await register({
+      const res = await register({
         name: formData.fullName,
         email: formData.email,
         password: formData.password
       });
+      setRegistrationData(res);
       setShowSuccessMessage(true);
       setTimeout(() => setShowSuccessMessage(false), 30000);
     } catch (error) {
@@ -238,6 +243,17 @@ function Register() {
           <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mt-4 text-sm">
             <p className="font-semibold">Registered successfully!</p>
             <p className="mt-1">Kindly check your email or spam folder for your verification link (valid for 5 minutes).</p>
+            {registrationData?.verificationLink && (
+              <div className="mt-3 p-3 bg-white border border-green-300 rounded-lg text-center shadow-sm">
+                <p className="text-xs text-gray-700 mb-2 font-medium">Or verify directly with one click:</p>
+                <a
+                  href={registrationData.verificationLink}
+                  className="inline-block w-full bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-700 transition"
+                >
+                  Verify My Account Now
+                </a>
+              </div>
+            )}
             <div className="mt-3 pt-2 border-t border-green-200 flex items-center justify-between">
               <span className="text-xs text-green-800">Didn't get the email?</span>
               <button

@@ -8,6 +8,7 @@ function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [resetData, setResetData] = useState(null);
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
@@ -35,7 +36,8 @@ function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      await forgotPassword(email);
+      const res = await forgotPassword(email);
+      setResetData(res);
       setIsSubmitted(true);
     } catch (error) {
       console.error('Forgot password error:', error);
@@ -64,8 +66,21 @@ function ForgotPassword() {
 
             <div className="px-6 py-8 text-center">
               <p className="text-gray-600 mb-6">
-                If you don't see the email in your inbox, please check your spam folder.
+                If you don't see the email in your inbox, please check your spam folder (link valid for 10 minutes).
               </p>
+
+              {resetData?.resetLink && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-300 rounded-lg text-center">
+                  <p className="text-xs text-gray-700 mb-2 font-medium">Or reset your password directly:</p>
+                  <a
+                    href={resetData.resetLink}
+                    className="inline-block w-full bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-700 transition"
+                  >
+                    Reset Password Now
+                  </a>
+                </div>
+              )}
+
               <Link
                 to="/login"
                 className="btn-primary inline-flex items-center"
