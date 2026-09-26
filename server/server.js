@@ -25,24 +25,23 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    origin: (origin, callback) => {
+      if (isOriginAllowed(origin)) callback(null, true);
+      else callback(new Error('Blocked by Socket.io CORS: ' + origin));
+    },
+    methods: ['GET', 'POST'],
     credentials: true,
   }
 });
 
 // Middleware
 app.use(cors({
-  origin: true,
+  origin: (origin, callback) => {
+    if (isOriginAllowed(origin)) callback(null, true);
+    else callback(new Error('Blocked by CORS: ' + origin));
+  },
   credentials: true,
 }));
-
-// Request logger for cloud debugging
-app.use((req, res, next) => {
-  console.log(`📡 [${new Date().toISOString()}] ${req.method} ${req.originalUrl} | Origin: ${req.headers.origin || 'no-origin'}`);
-  next();
-});
-
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 

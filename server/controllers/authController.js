@@ -99,6 +99,21 @@ const sendResetEmail = async (email, link) => {
   throw new Error('No email service configured');
 };
 
+// Helper to get the correct frontend base URL (supporting FRONTEND_URL, CLIENT_URL, or request Origin)
+const getFrontendBaseUrl = (req) => {
+  if (process.env.FRONTEND_URL && !process.env.FRONTEND_URL.includes('localhost')) {
+    return process.env.FRONTEND_URL.replace(/\/$/, '');
+  }
+  if (process.env.CLIENT_URL && !process.env.CLIENT_URL.includes('localhost')) {
+    return process.env.CLIENT_URL.replace(/\/$/, '');
+  }
+  if (req && req.headers && req.headers.origin && !req.headers.origin.includes('localhost')) {
+    return req.headers.origin.replace(/\/$/, '');
+  }
+  const fallback = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
+  return fallback.replace(/\/$/, '');
+};
+
 // Generate JWT
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -133,7 +148,8 @@ const registerUser = async (req, res) => {
 
     if (user) {
       // Send verification email
-      const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify/${verificationToken}`;
+      const baseUrl = getFrontendBaseUrl(req);
+      const verificationLink = `${baseUrl}/verify/${verificationToken}`;
       console.log(`\n============================================================`);
       console.log(`VERIFICATION LINK FOR ${email}:`);
       console.log(`${verificationLink}`);
@@ -236,7 +252,8 @@ const forgotPassword = async (req, res) => {
     }
 
     const resetToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '10m' });
-    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
+    const baseUrl = getFrontendBaseUrl(req);
+    const resetLink = `${baseUrl}/reset-password/${resetToken}`;
 
     console.log(`\n============================================================`);
     console.log(`PASSWORD RESET LINK FOR ${email}:`);
