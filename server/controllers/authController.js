@@ -13,11 +13,17 @@ if (process.env.SENDGRID_API_KEY) {
   }
 }
 
-// Email sender helper supporting both Gmail (Nodemailer) and SendGrid
-const sendVerificationEmail = async (email, link) => {
-  if (process.env.EMAIL_PASS) {
-    const transporter = nodemailer.createTransport({
+// Persistent pooled mail transporter to prevent connection delays
+let mailTransporter = null;
+const getMailTransporter = () => {
+  if (!mailTransporter && process.env.EMAIL_PASS) {
+    mailTransporter = nodemailer.createTransport({
       service: 'gmail',
+      pool: true,
+      maxConnections: 3,
+      connectionTimeout: 10000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS.replace(/\s+/g, ''),
@@ -26,6 +32,14 @@ const sendVerificationEmail = async (email, link) => {
         rejectUnauthorized: false,
       },
     });
+  }
+  return mailTransporter;
+};
+
+// Email sender helper supporting both Gmail (Nodemailer) and SendGrid
+const sendVerificationEmail = async (email, link) => {
+  const transporter = getMailTransporter();
+  if (transporter) {
     return await transporter.sendMail({
       from: `"CIMA" <${process.env.EMAIL_USER}>`,
       to: email,
@@ -58,17 +72,8 @@ const sendVerificationEmail = async (email, link) => {
 };
 
 const sendResetEmail = async (email, link) => {
-  if (process.env.EMAIL_PASS) {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS.replace(/\s+/g, ''),
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
+  const transporter = getMailTransporter();
+  if (transporter) {
     return await transporter.sendMail({
       from: `"CIMA" <${process.env.EMAIL_USER}>`,
       to: email,
@@ -129,17 +134,53 @@ const registerUser = async (req, res) => {
 
   try {
     // Check if user exists
-    const userExists = await User.findOne({ email });
+    let user = await User.findOne({ email });
 
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+    if (user) {
+      if (user.isVerified) {
+        return res.status(400).json({ message: 'This email is already registered and verified. Please log in.' });
+      }
+
+      // Existing unverified user: refresh token and resend verification link!
+      const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+      user.verificationToken = verificationToken;
+      if (name) user.name = name;
+      if (password) user.password = password;
+      await user.save();
+
+      const baseUrl = getFrontendBaseUrl(req);
+      const verificationLink = `${baseUrl}/verify/${verificationToken}`;
+      console.log(`\n============================================================`);
+      console.log(`RESENDING VERIFICATION LINK FOR ${email}:`);
+      console.log(`${verificationLink}`);
+      console.log(`============================================================\n`);
+
+      let emailSent = false;
+      try {
+        await sendVerificationEmail(email, verificationLink);
+        emailSent = true;
+        console.log(`Verification email resent successfully to ${email}`);
+      } catch (emailError) {
+        console.warn('Email sending failed (e.g. SendGrid quota or network):', emailError?.response?.body || emailError.message);
+      }
+
+      return res.status(200).json({
+        message: emailSent
+          ? 'Account is already registered but unverified. A new verification link has been sent to your email!'
+          : 'A new verification link has been generated. Please check your email.',
+        verificationLink: process.env.NODE_ENV !== 'production' ? verificationLink : undefined,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isVerified: false,
+      });
     }
 
     // Generate verification token
     const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // Create user (isVerified is false by default)
-    const user = await User.create({
+    user = await User.create({
       name,
       email,
       password,
